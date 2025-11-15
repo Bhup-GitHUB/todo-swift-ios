@@ -1,16 +1,31 @@
 import SwiftUI
 
-struct AddTodoView: View {
+struct EditTodoView: View {
     @ObservedObject var viewModel: TodoViewModel
     @Environment(\.dismiss) var dismiss
     
-    @State private var todoTitle: String = ""
-    @State private var category: String = "General"
+    let todo: TodoItem
+    
+    @State private var todoTitle: String
+    @State private var category: String
     @State private var dueDate: Date?
-    @State private var hasDueDate: Bool = false
-    @State private var priority: Priority = .medium
-    @State private var notes: String = ""
+    @State private var hasDueDate: Bool
+    @State private var priority: Priority
+    @State private var notes: String
+    @State private var isCompleted: Bool
     @FocusState private var isTextFieldFocused: Bool
+    
+    init(viewModel: TodoViewModel, todo: TodoItem) {
+        self.viewModel = viewModel
+        self.todo = todo
+        _todoTitle = State(initialValue: todo.title)
+        _category = State(initialValue: todo.category)
+        _dueDate = State(initialValue: todo.dueDate)
+        _hasDueDate = State(initialValue: todo.dueDate != nil)
+        _priority = State(initialValue: todo.priority)
+        _notes = State(initialValue: todo.notes)
+        _isCompleted = State(initialValue: todo.isCompleted)
+    }
     
     var body: some View {
         NavigationView {
@@ -18,6 +33,8 @@ struct AddTodoView: View {
                 Section {
                     TextField("Enter todo title", text: $todoTitle)
                         .focused($isTextFieldFocused)
+                    
+                    Toggle("Completed", isOn: $isCompleted)
                 } header: {
                     Text("Title")
                 }
@@ -35,11 +52,6 @@ struct AddTodoView: View {
                             category = newValue
                         }
                     ))
-                    .onSubmit {
-                        if !category.trimmingCharacters(in: .whitespaces).isEmpty {
-                            // Category will be saved as entered
-                        }
-                    }
                 } header: {
                     Text("Category")
                 }
@@ -74,7 +86,7 @@ struct AddTodoView: View {
                     Text("Notes (Optional)")
                 }
             }
-            .navigationTitle("Add Todo")
+            .navigationTitle("Edit Todo")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
@@ -96,20 +108,25 @@ struct AddTodoView: View {
     }
     
     private func saveTodo() {
-        viewModel.addTodo(
-            title: todoTitle,
-            category: category.isEmpty ? "General" : category,
-            dueDate: hasDueDate ? dueDate : nil,
-            priority: priority,
-            notes: notes
-        )
+        var updatedTodo = todo
+        updatedTodo.title = todoTitle
+        updatedTodo.category = category.isEmpty ? "General" : category
+        updatedTodo.dueDate = hasDueDate ? dueDate : nil
+        updatedTodo.priority = priority
+        updatedTodo.notes = notes
+        updatedTodo.isCompleted = isCompleted
+        
+        viewModel.updateTodo(updatedTodo)
         dismiss()
     }
 }
 
-struct AddTodoView_Previews: PreviewProvider {
+struct EditTodoView_Previews: PreviewProvider {
     static var previews: some View {
-        AddTodoView(viewModel: TodoViewModel())
+        EditTodoView(
+            viewModel: TodoViewModel(),
+            todo: TodoItem(title: "Sample Todo", category: "Work", priority: .high)
+        )
     }
 }
 

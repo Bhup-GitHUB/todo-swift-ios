@@ -2,17 +2,6 @@
 
 A simple and elegant todo app built with SwiftUI for iOS.
 
-## Phase 1: Basic UI & Core Functionality ✅
-
-This phase includes:
-
-- ✅ List view of todos
-- ✅ Add new todos
-- ✅ Mark todos as complete/incomplete
-- ✅ Delete todos
-- ✅ Clean SwiftUI interface
-- ✅ MVVM architecture
-
 ## Setup Instructions
 
 ### Prerequisites
@@ -44,6 +33,8 @@ This phase includes:
      - `TodoApp/Views/ContentView.swift`
      - `TodoApp/Views/TodoListView.swift`
      - `TodoApp/Views/AddTodoView.swift`
+     - `TodoApp/Views/EditTodoView.swift`
+     - `TodoApp/Services/DataManager.swift`
      - `TodoApp/TodoAppApp.swift`
 
 4. **Update App Entry Point**
@@ -60,24 +51,35 @@ This phase includes:
 ```
 TodoApp/
 ├── Models/
-│   └── TodoItem.swift          # Todo data model
+│   └── TodoItem.swift          # Todo data model with priority, category, due date
 ├── Views/
 │   ├── ContentView.swift       # Main entry view
-│   ├── TodoListView.swift      # List of todos
-│   └── AddTodoView.swift       # Add new todo form
+│   ├── TodoListView.swift      # List of todos with search & filters
+│   ├── AddTodoView.swift       # Add new todo form
+│   └── EditTodoView.swift      # Edit existing todo form
 ├── ViewModels/
 │   └── TodoViewModel.swift     # Business logic & state management
+├── Services/
+│   └── DataManager.swift      # UserDefaults persistence layer
 └── TodoAppApp.swift            # App entry point
 ```
 
 ## Features
 
-### Current Features (Phase 1)
+### Current Features
 
-- **View Todos**: See all your todos in a clean list
-- **Add Todos**: Tap the + button to add new todos
+- **View Todos**: See all your todos in a clean list with priority indicators
+- **Add Todos**: Tap the + button to add new todos with category, priority, due date, and notes
+- **Edit Todos**: Tap on any todo to edit its details
 - **Complete Todos**: Tap the circle icon to mark as complete/incomplete
 - **Delete Todos**: Swipe left on a todo to delete it
+- **Search**: Search todos by title, category, or notes
+- **Filter**: Filter by category, priority, or completion status
+- **Categories**: Organize todos with custom categories
+- **Priority Levels**: Set Low, Medium, or High priority with visual indicators
+- **Due Dates**: Set due dates with overdue detection (red color for overdue)
+- **Notes**: Add additional notes to todos
+- **Data Persistence**: All todos are automatically saved using UserDefaults
 - **Empty State**: Beautiful empty state when no todos exist
 
 ## Architecture
@@ -88,14 +90,16 @@ The app follows **MVVM (Model-View-ViewModel)** architecture:
 - **View**: SwiftUI views (`TodoListView`, `AddTodoView`, etc.)
 - **ViewModel**: `TodoViewModel` - Manages todo state and business logic
 
-## Next Steps (Phase 2)
+## Next Steps (Phase 3)
 
-- Data persistence (Core Data)
-- Edit existing todos
-- Categories/tags
-- Search and filter
-- Due dates
-- Priority levels
+- Animations and transitions
+- Dark mode support
+- Notifications/reminders
+- Statistics/analytics (completed tasks, streaks)
+- Swipe gestures for quick actions
+- Widget support (iOS 14+)
+- iCloud sync (optional)
+- Export/share functionality
 
 ## License
 
