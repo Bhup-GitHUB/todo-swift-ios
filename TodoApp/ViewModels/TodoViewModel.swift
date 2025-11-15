@@ -12,6 +12,14 @@ class TodoViewModel: ObservableObject {
     
     init() {
         loadTodos()
+        // Request notification permissions
+        NotificationManager.shared.requestAuthorization()
+        // Schedule notifications for existing todos
+        for todo in todos {
+            if let dueDate = todo.dueDate, !todo.isCompleted {
+                NotificationManager.shared.scheduleNotification(for: todo)
+            }
+        }
         // Add sample data only if no saved data exists
         if todos.isEmpty {
             addSampleData()
@@ -46,12 +54,21 @@ class TodoViewModel: ObservableObject {
         let newTodo = TodoItem(title: title, category: category, dueDate: dueDate, priority: priority, notes: notes)
         todos.append(newTodo)
         saveTodos()
+        
+        // Schedule notification if due date is set
+        if let dueDate = dueDate {
+            NotificationManager.shared.scheduleNotification(for: newTodo)
+        }
     }
     
     func updateTodo(_ todo: TodoItem) {
         if let index = todos.firstIndex(where: { $0.id == todo.id }) {
+            let oldTodo = todos[index]
             todos[index] = todo
             saveTodos()
+            
+            // Update notification
+            NotificationManager.shared.updateNotification(for: todo)
         }
     }
     
@@ -59,12 +76,18 @@ class TodoViewModel: ObservableObject {
         if let index = todos.firstIndex(where: { $0.id == todo.id }) {
             todos[index].isCompleted.toggle()
             saveTodos()
+            
+            // Update notification
+            NotificationManager.shared.updateNotification(for: todos[index])
         }
     }
     
     func deleteTodo(_ todo: TodoItem) {
         todos.removeAll { $0.id == todo.id }
         saveTodos()
+        
+        // Cancel notification
+        NotificationManager.shared.cancelNotification(for: todo)
     }
     
     func deleteTodo(at offsets: IndexSet) {

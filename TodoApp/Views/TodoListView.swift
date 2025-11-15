@@ -4,6 +4,7 @@ struct TodoListView: View {
     @ObservedObject var viewModel: TodoViewModel
     @State private var showingAddTodo = false
     @State private var showingFilters = false
+    @State private var showingStatistics = false
     
     var body: some View {
         NavigationView {
@@ -86,33 +87,94 @@ struct TodoListView: View {
                         List {
                             ForEach(viewModel.filteredTodos) { todo in
                                 TodoRowView(viewModel: viewModel, todo: todo) {
-                                    viewModel.toggleTodo(todo)
+                                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                        viewModel.toggleTodo(todo)
+                                    }
+                                }
+                                .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                                    Button(role: .destructive) {
+                                        withAnimation(.spring()) {
+                                            viewModel.deleteTodo(todo)
+                                        }
+                                    } label: {
+                                        Label("Delete", systemImage: "trash")
+                                    }
+                                    
+                                    Button {
+                                        withAnimation(.spring()) {
+                                            var updatedTodo = todo
+                                            updatedTodo.isCompleted.toggle()
+                                            viewModel.updateTodo(updatedTodo)
+                                        }
+                                    } label: {
+                                        Label(todo.isCompleted ? "Undo" : "Complete", systemImage: todo.isCompleted ? "arrow.uturn.backward" : "checkmark")
+                                    }
+                                    .tint(todo.isCompleted ? .orange : .green)
+                                }
+                                .swipeActions(edge: .leading, allowsFullSwipe: false) {
+                                    Button {
+                                        // Quick edit - could open edit view
+                                    } label: {
+                                        Label("Edit", systemImage: "pencil")
+                                    }
+                                    .tint(.blue)
                                 }
                             }
                             .onDelete { indexSet in
-                                let todosToDelete = indexSet.map { viewModel.filteredTodos[$0] }
-                                for todo in todosToDelete {
-                                    viewModel.deleteTodo(todo)
+                                withAnimation(.spring()) {
+                                    let todosToDelete = indexSet.map { viewModel.filteredTodos[$0] }
+                                    for todo in todosToDelete {
+                                        viewModel.deleteTodo(todo)
+                                    }
                                 }
                             }
                         }
                         .listStyle(.insetGrouped)
+                        .animation(.spring(response: 0.3, dampingFraction: 0.8), value: viewModel.filteredTodos.count)
                     }
                 }
             }
             .navigationTitle("My Todos")
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button(action: {
-                        showingFilters.toggle()
-                    }) {
-                        Image(systemName: "line.3.horizontal.decrease.circle")
-                            .font(.title2)
+                    HStack(spacing: 12) {
+                        Button(action: {
+                            showingStatistics.toggle()
+                        }) {
+                            Image(systemName: "chart.bar.fill")
+                                .font(.title2)
+                        }
+                        
+                        Button(action: {
+                            showingFilters.toggle()
+                        }) {
+                            Image(systemName: "line.3.horizontal.decrease.circle")
+                                .font(.title2)
+                        }
                     }
                 }
-                ToolbarItem(placement: .navigationBarTrailing) {
+                ToolbarItemGroup(placement: .navigationBarTrailing) {
+                    Menu {
+                        Button(action: {
+                            shareTodos()
+                        }) {
+                            Label("Export Todos", systemImage: "square.and.arrow.up")
+                        }
+                        
+                        Button(action: {
+                            showingAddTodo = true
+                        }) {
+                            Label("Add Todo", systemImage: "plus.circle")
+                        }
+                    } label: {
+                        Image(systemName: "ellipsis.circle.fill")
+                            .font(.title2)
+                    }
+                    
                     Button(action: {
-                        showingAddTodo = true
+                        withAnimation(.spring()) {
+                            showingAddTodo = true
+                        }
                     }) {
                         Image(systemName: "plus.circle.fill")
                             .font(.title2)
@@ -125,7 +187,34 @@ struct TodoListView: View {
             .sheet(isPresented: $showingFilters) {
                 FilterView(viewModel: viewModel)
             }
+            .sheet(isPresented: $showingStatistics) {
+                StatisticsView(viewModel: viewModel)
+            }
         }
+    }
+    
+    private func shareTodos() {
+        let todosText = viewModel.todos.map { todo in
+            let status = todo.isCompleted ? "✅" : "⭕"
+            let priority = todo.priority.rawValue
+            let category = todo.category
+            let dueDate = todo.dueDate != nil ? "Due: \(formatDate(todo.dueDate!))" : ""
+            return "\(status) \(todo.title) [\(category)] [\(priority)] \(dueDate)"
+        }.joined(separator: "\n")
+        
+        let activityVC = UIActivityViewController(activityItems: [todosText], applicationActivities: nil)
+        
+        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+           let rootViewController = windowScene.windows.first?.rootViewController {
+            rootViewController.present(activityVC, animated: true)
+        }
+    }
+    
+    private func formatDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .short
+        formatter.timeStyle = .short
+        return formatter.string(from: date)
     }
 }
 
@@ -197,11 +286,17 @@ struct TodoRowView: View {
         .padding(.vertical, 8)
         .contentShape(Rectangle())
         .onTapGesture {
-            showingEditTodo = true
+            withAnimation(.spring()) {
+                showingEditTodo = true
+            }
         }
         .sheet(isPresented: $showingEditTodo) {
             EditTodoView(viewModel: viewModel, todo: todo)
         }
+        .transition(.asymmetric(
+            insertion: .scale.combined(with: .opacity),
+            removal: .scale.combined(with: .opacity)
+        ))
     }
     
     private func formatDate(_ date: Date) -> String {
